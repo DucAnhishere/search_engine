@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from pymilvus import MilvusClient
+from pymilvus import MilvusClient, DataType
 
 def create_embedding(model_name, all_chunks, query):
     model = SentenceTransformer(model_name)
@@ -8,13 +8,40 @@ def create_embedding(model_name, all_chunks, query):
     return embeddings1, embeddings2
     
 def store_data(collection_name, embeddings, embeddings_list, all_chunks, resume_paths, resume_ids):
-
     client = MilvusClient(
-        uri="http://192.168.80.25:19530",
+        uri="http://localhost:19530",
         token="root:Milvus"
     )
 
-    # Prepare data for insertion
+    # Kiểm tra và tạo collection nếu chưa có
+    if not client.has_collection(collection_name):
+        print(f"📁 Collection '{collection_name}' not found. Creating...")
+
+        # Tạo schema theo yêu cầu
+        schema = MilvusClient.create_schema(
+            auto_id=True,
+            enable_dynamic_field=True
+        )
+        schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+        schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=768)
+        schema.add_field(field_name="text", datatype=DataType.VARCHAR, max_length=5000)
+        schema.add_field(field_name="resume_paths", datatype=DataType.VARCHAR, max_length=2000)
+        schema.add_field(field_name="resume_ids", datatype=DataType.VARCHAR, max_length=500)
+
+        # Tạo collection
+        client.create_collection(
+            collection_name=collection_name,
+            schema=schema
+        )
+
+        # Tạo index cho trường vector
+        client.create_index(
+            collection_name=collection_name,
+            field_name="vector",
+            index_params={"index_type": "AUTOINDEX", "metric_type": "COSINE"}
+        )
+
+    # Chuẩn bị dữ liệu
     data = [
         {
             "vector": embeddings_list[i],
@@ -25,13 +52,15 @@ def store_data(collection_name, embeddings, embeddings_list, all_chunks, resume_
         for i in range(len(embeddings))
     ]
 
-    # Insert data into the collection
+    # Insert dữ liệu
     client.insert(collection_name=collection_name, data=data)
+    print(f"✅ Inserted {len(data)} entries into '{collection_name}'")
+
 
 def search_resumes(query_embeddings, collection_name, k):
 
     client = MilvusClient(
-        uri="http://192.168.80.25:19530",
+        uri="http://localhost:19530",
         token="root:Milvus"
     )
 

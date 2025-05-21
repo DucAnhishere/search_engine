@@ -3,3 +3,4 @@ volumes/
 docker-compose.yml
 __pycache__/
 *.pyc
+**/*.ipynb
