@@ -1,0 +1,10 @@
+streamlit
+sentence-transformers
+pymilvus
+numpy
+langchain
+pymupdf
+python-docx
+torch
+torchvision
+docling

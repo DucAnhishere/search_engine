@@ -1,0 +1,5 @@
+CV_Training/
+volumes/
+docker-compose.yml
+__pycache__/
+*.pyc
