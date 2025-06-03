@@ -62,7 +62,3 @@ streamlit run src/app.py
 ## Contributing
 
 Pull requests and suggestions are welcome!
-
-## License
-
-Please add your license information here (if any).
