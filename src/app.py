@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 from text_processing import chunking
-from vector_search import create_embedding, store_data, search_resumes
+from vector_search import create_embedding, store_data, search_resumes, create_collection_if_not_exists, load_collection
 from scoring import compute_weighted_score
 import mimetypes
 
@@ -111,6 +111,9 @@ if st.sidebar.button("📜 Process CVs"):
         st.error("⚠️ The folder does not exist. Please select a valid folder.")
     else:
         with st.spinner("⏳ Processing CVs..."):
+            
+            # Create collection if it doesn't exist
+            create_collection_if_not_exists(collection_name, dimension)
 
             # Split text into chunks
             all_chunks, resume_paths, resume_ids = chunking(directory_path, chunk_size, chunk_overlap)
@@ -130,7 +133,17 @@ if st.sidebar.button("📜 Process CVs"):
             )
 
             st.success("✅ All CVs have been processed")
-            
+
+# Add Collection Management in Sidebar
+st.sidebar.header("🗄️ Database Management")
+if st.sidebar.button("🔧 Load Collection"):
+    try:
+        with st.spinner("Loading collection..."):
+            load_collection(collection_name)
+            st.sidebar.success(f"✅ Collection '{collection_name}' loaded!")
+    except Exception as e:
+        st.sidebar.error(f"❌ Error loading collection: {str(e)}")
+
 
 
 
